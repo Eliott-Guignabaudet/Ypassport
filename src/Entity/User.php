@@ -2,27 +2,91 @@
 
 namespace App\Entity;
 
+
+use ApiPlatform\Action\NotFoundAction;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Get;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
+use App\Controller\MeController;
+use Normalizer;
+use PhpParser\Builder\Method;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new Get(
+            controller : NotFoundAction::class,
+            read : false,
+            output : false,
+            openapiContext: [
+                'summary' => 'hidden',
+            ],
+        ),
+
+        // new GetCollection(
+        //     routePrefix: '/api/me',
+        //     routeName: '/api/me',
+        //     controller: MeController::class,
+        //     read: false,
+        //     output: false,
+        //     paginationEnabled: false,
+        //     host: '{subdomain}.api-platform.com'
+        // ),
+        new GetCollection(
+            routePrefix: '/api/me',
+            routeName: '/api/me',
+            controller : MeController::class,
+            read : false,
+            output : false,
+            openapiContext: [
+                'summary' => 'hidden',
+            ],
+        )
+    ],
+    // collectionOperations: [
+    //     'me' =>[
+    //         'pagination_enabled' => false,
+    //         'path' => '/me',
+    //         'method' => 'get',
+    //         'controller' => MeController::class,
+    //         'read' => false,
+    //     ],
+    // ],
+    // itemOperations: [
+    //     'get' => [
+    //         'controller' => NotFoundAction::class,
+    //         'openapi_context' => [
+    //             'summary' => 'hidden',
+    //         ],
+    //         'read' => false,
+    //         'output' => false,
+    //     ],
+    // ],
+    normalizationContext: [
+        'groups' => ['user:read'],
+    ],
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
+    #[Groups(['user:read'])]
     private ?string $email = null;
 
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private array $roles = [];
 
     /**
