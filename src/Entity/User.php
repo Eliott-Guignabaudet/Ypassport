@@ -2,11 +2,11 @@
 
 namespace App\Entity;
 
-
 use ApiPlatform\Action\NotFoundAction;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Get;
+use App\Controller\MeController;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -14,13 +14,15 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
-use App\Controller\MeController;
+
 use Normalizer;
 use PhpParser\Builder\Method;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
+    security: 'is_granted("ROLE_USER")',
     operations: [
+        
         new Get(
             controller : NotFoundAction::class,
             read : false,
@@ -29,27 +31,25 @@ use PhpParser\Builder\Method;
                 'summary' => 'hidden',
             ],
         ),
-
-        // new GetCollection(
-        //     routePrefix: '/api/me',
-        //     routeName: '/api/me',
-        //     controller: MeController::class,
-        //     read: false,
-        //     output: false,
-        //     paginationEnabled: false,
-        //     host: '{subdomain}.api-platform.com'
-        // ),
         new GetCollection(
-            routePrefix: '/api/me',
-            routeName: '/api/me',
-            controller : MeController::class,
-            read : false,
-            output : false,
+            uriTemplate: '/me',
+            controller: MeController::class,
+            status: 200,
+            read: false,
+            paginationEnabled: false,
+            
             openapiContext: [
-                'summary' => 'hidden',
+                'security' => ['cookieAuth' => []],
             ],
         )
+        
     ],
+    normalizationContext: [
+        'groups' => ['user:read'],
+    ],
+
+
+
     // collectionOperations: [
     //     'me' =>[
     //         'pagination_enabled' => false,
@@ -69,9 +69,7 @@ use PhpParser\Builder\Method;
     //         'output' => false,
     //     ],
     // ],
-    normalizationContext: [
-        'groups' => ['user:read'],
-    ],
+    
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
